@@ -1,0 +1,10 @@
+# Default ignored files
+/shelf/
+/.idea/
+/backend/.gradle/
+/backend/build/
+/frontend/.gradle/
+/frontend/build/
+/frontend/frontend/
+/frontend/target/
+RealtyServiceDocker.iml

@@ -1,0 +1,62 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.0'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'com.vaadin' version '24.1.7'
+}
+
+group = 'ru.gr5140904_30201.kichu'
+version = '1.0.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+    maven { url = "https://maven.vaadin.com/vaadin-addons" }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+dependencies {
+    // Vaadin
+    implementation 'com.vaadin:vaadin-spring-boot-starter'
+
+    // Spring WebFlux (для WebClient)
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // Servlet
+    implementation 'jakarta.servlet:jakarta.servlet-api:6.0.0' // Вместо javax.servlet
+
+    // Jackson
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.core:jackson-core'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Spring Boot Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "com.vaadin:vaadin-bom:24.1.7"
+        mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+    }
+}
+
+vaadin {
+    productionMode = true
+    pnpmEnable = true
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

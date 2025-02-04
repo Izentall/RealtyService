@@ -1,0 +1,49 @@
+plugins {
+    id 'org.springframework.boot' version '3.2.0'
+    id 'io.spring.dependency-management' version '1.1.0'
+    id 'java'
+}
+
+group = 'ru.gr5140904_30201.kichu'
+version = '1.0.0-SNAPSHOT'
+sourceCompatibility = '17'
+
+def springBootVersion = '3.2.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot Web for building REST APIs
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // Spring Data JPA for database interactions
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // PostgreSQL driver
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // Hibernate Core (необязательно, если Spring Boot версии 3.x уже включает нужную версию Hibernate)
+    implementation 'org.hibernate:hibernate-core:6.1.0.Final'
+
+    // Spring Security for authentication
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // Password hashing library
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Spring Boot Actuator, to check DB
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Lombok for reducing boilerplate code
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Testing libraries
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+test {
+    useJUnitPlatform()
+}
