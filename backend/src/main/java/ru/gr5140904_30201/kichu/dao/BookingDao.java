@@ -64,6 +64,7 @@ public class BookingDao {
                 from properties p
                 left join bookings b on p.id = b.property_id
                 where p.owner_id = :owner_id
+                    and b.status = 'approved'
                 group by p.id, p.title
                 """,
                 new MapSqlParameterSource("owner_id", ownerId),

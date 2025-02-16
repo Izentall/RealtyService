@@ -76,7 +76,7 @@ public class OwnerBookingView extends VerticalLayout implements AuthorityRequire
         }).setHeader("Property Title");
 
         // Настраиваем отображение колонок
-        bookingGrid.addColumns("userId", "startDate", "endDate", "status");
+        bookingGrid.addColumns("startDate", "endDate", "status");
 
         // Добавляем в каждую строку кнопки для изменения статуса
         bookingGrid.addComponentColumn(booking -> {
