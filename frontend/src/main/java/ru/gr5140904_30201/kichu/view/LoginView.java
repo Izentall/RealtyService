@@ -29,6 +29,10 @@ public class LoginView extends VerticalLayout implements NavbarUpdatable {
         Button loginButton = new Button("Login", event -> {
             String email = emailField.getValue();
             User user = authorizationService.login(email, passwordField.getValue());
+            if (user == null) {
+                Notification.show("Wrong email or password");
+                return;
+            }
             AuthUtils.saveUser(user);
             layout.updateNavbar();
             Notification.show("Login successful!");

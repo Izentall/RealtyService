@@ -30,8 +30,13 @@ public class RegistrationView extends VerticalLayout implements NavbarUpdatable 
         PasswordField passwordField = new PasswordField("Password");
 
         Button registerButton = new Button("Register", event -> {
-            System.out.println(authorizationService.register(nameField.getValue(), emailField.getValue(), roleField.getValue(), passwordField.getValue()));
-            Notification.show("Registration successful!");
+            System.out.println();
+            Notification.show(authorizationService.register(
+                    nameField.getValue(),
+                    emailField.getValue(),
+                    roleField.getValue(),
+                    passwordField.getValue()
+            ));
         });
 
         add(nameField, emailField, roleField, passwordField, registerButton);

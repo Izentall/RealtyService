@@ -24,6 +24,7 @@ import ru.gr5140904_30201.kichu.util.NavbarUpdatable;
 import ru.gr5140904_30201.kichu.view.MainLayout;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,8 +35,12 @@ import static ru.gr5140904_30201.kichu.model.enums.Role.USER;
 public class ClientBookingView extends VerticalLayout implements AuthorityRequired, NavbarUpdatable {
     private final BookingService bookingService;
     private final RealtyService realtyService;
+    private final DatePicker startDatePicker = new DatePicker("Start Date");
+    private final DatePicker endDatePicker = new DatePicker("End Date");
     private final Grid<Realty> searchResultsGrid = new Grid<>(Realty.class);
     private final Grid<Booking> bookingGrid = new Grid<>(Booking.class);
+
+    private List<Realty> foundRealties = new ArrayList<>();
 
     @Autowired
     public ClientBookingView(BookingService bookingService, RealtyService realtyService) {
@@ -55,8 +60,6 @@ public class ClientBookingView extends VerticalLayout implements AuthorityRequir
 
     private HorizontalLayout configureSearchSection() {
         TextField locationField = new TextField("Location");
-        DatePicker startDatePicker = new DatePicker("Start Date");
-        DatePicker endDatePicker = new DatePicker("End Date");
         TextField minPriceField = new TextField("Min Price");
         TextField maxPriceField = new TextField("Max Price");
 
@@ -67,9 +70,9 @@ public class ClientBookingView extends VerticalLayout implements AuthorityRequir
             Long minPrice = minPriceField.getValue().isEmpty() ? null : Long.valueOf(minPriceField.getValue());
             Long maxPrice = maxPriceField.getValue().isEmpty() ? null : Long.valueOf(maxPriceField.getValue());
 
-            List<Realty> searchResults = realtyService.searchProperties(
+            foundRealties = realtyService.searchProperties(
                     location, startDate, endDate, minPrice, maxPrice, null);
-            searchResultsGrid.setItems(searchResults);
+            searchResultsGrid.setItems(foundRealties);
         });
 
         return new HorizontalLayout(locationField, startDatePicker, endDatePicker, minPriceField, maxPriceField, searchButton);
@@ -96,8 +99,24 @@ public class ClientBookingView extends VerticalLayout implements AuthorityRequir
 
         searchResultsGrid.addComponentColumn(realty -> {
             Button bookButton = new Button("Book", event -> {
-                Dialog bookingDialog = createBookingDialog(realty);
-                bookingDialog.open();
+                if (endDatePicker.isEmpty() || startDatePicker.isEmpty()
+                        || endDatePicker.getValue().isBefore(startDatePicker.getValue())) {
+                    Notification.show("End date can not be before than Start date");
+                    return;
+                }
+                Booking booking = Booking.builder()
+                        .propertyId(realty.getId())
+                        .userId(getUserId())
+                        .startDate(startDatePicker.getValue())
+                        .endDate(endDatePicker.getValue())
+                        .status(BookingStatus.PENDING)
+                        .build();
+
+                bookingService.createBooking(booking);
+                foundRealties.remove(realty);
+                searchResultsGrid.setItems(foundRealties);
+                Notification.show("Booking created successfully!");
+                loadBookings();
             });
             return bookButton;
         }).setHeader("Actions").setAutoWidth(true);
@@ -107,30 +126,6 @@ public class ClientBookingView extends VerticalLayout implements AuthorityRequir
         gridContainer.getStyle().set("overflow-x", "auto");
         gridContainer.setWidthFull();
         add(gridContainer);
-    }
-
-    private Dialog createBookingDialog(Realty realty) {
-        Dialog dialog = new Dialog();
-        DatePicker startDatePicker = new DatePicker("Start Date");
-        DatePicker endDatePicker = new DatePicker("End Date");
-
-        Button bookButton = new Button("Book", event -> {
-            Booking booking = Booking.builder()
-                    .propertyId(realty.getId())
-                    .userId(getUserId())
-                    .startDate(startDatePicker.getValue())
-                    .endDate(endDatePicker.getValue())
-                    .status(BookingStatus.PENDING)
-                    .build();
-
-            bookingService.createBooking(booking);
-            Notification.show("Booking created successfully!");
-            dialog.close();
-            loadBookings();
-        });
-
-        dialog.add(startDatePicker, endDatePicker, bookButton);
-        return dialog;
     }
 
     private void configureBookingGrid() {
@@ -227,7 +222,7 @@ public class ClientBookingView extends VerticalLayout implements AuthorityRequir
                     .map(Realty::getPricePerDay)
                     .findFirst()
                     .orElseThrow();
-        }).setHeader("Price per day (kop)");
+        }).setHeader("Price per day (RUB)");
 
         bookingGrid.addColumns("startDate", "endDate", "status");
 

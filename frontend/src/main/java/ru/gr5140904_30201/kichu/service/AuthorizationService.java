@@ -17,8 +17,14 @@ public class AuthorizationService {
                 .password(password)
                 .userRole(role)
                 .build();
-
-       return realtyApiClient.register(user);
+        try {
+            return realtyApiClient.register(user);
+        } catch (Exception e) {
+            if (e.getMessage().equals("409 Conflict from POST http://localhost:8080/api/auth/register")) {
+                return "Email already in use";
+            }
+            return "Internal error, try again";
+        }
     }
 
     public User login(String email, String password) {
@@ -28,7 +34,11 @@ public class AuthorizationService {
                 .userRole("user")
                 .build();
 
-        return realtyApiClient.login(user);
+        try {
+            return realtyApiClient.login(user);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
 

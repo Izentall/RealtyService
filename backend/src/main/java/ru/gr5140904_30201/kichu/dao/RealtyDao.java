@@ -96,32 +96,47 @@ public class RealtyDao {
         );
     }
 
-    public List<Realty> searchProperties(String location, LocalDate startDate, LocalDate endDate, Long minPrice, Long maxPrice, String propertyType) {
-        // SQL запрос для фильтрации недвижимости
-        String sql = "SELECT * FROM properties WHERE address ILIKE :location AND price_per_day BETWEEN :minPrice AND :maxPrice";
+    public List<Realty> searchProperties(String location, LocalDate startDate, LocalDate endDate,
+                                         Long minPrice, Long maxPrice, String propertyType) {
+        String sql = """
+        SELECT p.*
+        FROM properties p
+        WHERE
+            address ILIKE :location
+            AND price_per_day BETWEEN :minPrice AND :maxPrice
+            AND NOT EXISTS (
+                SELECT 1
+                FROM jsonb_array_elements(p.availability->'availableIntervals') AS intervals
+                WHERE
+                    (intervals->>'from')::date > :startDate
+                    OR (intervals->>'to')::date < :endDate
+            )
+            AND NOT EXISTS (
+                SELECT 1
+                FROM bookings b
+                WHERE
+                    b.property_id = p.id
+                    AND b.status = 'approved'
+                    AND (
+                        (b.start_date BETWEEN :startDate AND :endDate)
+                        OR (b.end_date BETWEEN :startDate AND :endDate)
+                        OR (:startDate BETWEEN b.start_date AND b.end_date)
+                        OR (:endDate BETWEEN b.start_date AND b.end_date)
+                    )
+            )
+        """;
 
         Map<String, Object> params = new HashMap<>();
         params.put("location", "%" + location + "%");
-        params.put("minPrice", minPrice);
-        params.put("maxPrice", maxPrice);
-
-        if (propertyType != null) {
-            sql += " AND description = :propertyType";
-            params.put("propertyType", "%" + propertyType + "%");
-        }
-
-        // Условие для проверки интервалов доступности
-        sql += " AND NOT EXISTS (" +
-                "SELECT 1 FROM generate_series(:startDate::date, :endDate::date, '1 day') AS day " +
-                "WHERE NOT EXISTS (" +
-                "SELECT 1 FROM jsonb_array_elements(availability->'availableIntervals') AS intervals " +
-                "WHERE (intervals->>'from')::date <= day " +
-                "AND (intervals->>'to')::date >= day" +
-                ")" +
-                ")";
-
+        params.put("minPrice", minPrice != null ? minPrice : 0);
+        params.put("maxPrice", maxPrice != null ? maxPrice : Long.MAX_VALUE);
         params.put("startDate", startDate);
         params.put("endDate", endDate);
+
+        if (propertyType != null && !propertyType.isEmpty()) {
+            sql += " AND description ILIKE :propertyType";
+            params.put("propertyType", "%" + propertyType + "%");
+        }
 
         return namedParameterJdbcTemplate.query(sql, params, this::mapRealty);
     }
